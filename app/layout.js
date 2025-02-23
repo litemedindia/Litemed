@@ -12,7 +12,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata = {
-  title: "Curapod",
+  title: "Curapod - Device Manager",
   description: "Curapod Device Management Portal",
 };
 
