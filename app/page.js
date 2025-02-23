@@ -11,7 +11,7 @@ const Login = () => {
 
     const handleLogin = async () => {
         try {
-            const response = await axios.post("http://localhost:5001/login", { username, password });
+            const response = await axios.post("https://litemed-backend.vercel.app/login", { username, password });
             localStorage.setItem("token", response.data.token);
             router.push("/dashboard");
         } catch (err) {
