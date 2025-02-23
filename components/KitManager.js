@@ -76,7 +76,7 @@ const KitManager = () => {
     return (
         <div className="p-6 space-y-6 bg-gray-100 min-h-screen">
             <div className="flex justify-between items-center">
-                <h1 className="text-3xl font-bold text-gray-800">Kit Management</h1>
+                <h1 className="text-3xl font-bold text-gray-800">Curapod - Device Manager</h1>
                 <div className="flex space-x-4">
                     <button onClick={() => setShowUpload(!showUpload)} className="px-4 py-2 rounded bg-blue-600 text-white font-semibold shadow">Upload CSV</button>
                     <button onClick={handleLogout} className="px-4 py-2 rounded bg-red-600 text-white font-semibold shadow">Logout</button>
