@@ -234,49 +234,50 @@ const KitManager = () => {
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    {kits.map((kit, index) => (
-                                        <tr key={index} className="border text-gray-700">
-                                            <td className="border p-3 text-center">
-                                                {kit.status === "available" && (
-                                                    <input
-                                                        type="checkbox"
-                                                        checked={selectedKits.includes(kit._id)}
-                                                        onChange={() => toggleSelectKit(kit._id)}
-                                                    />
-                                                )}
-                                            </td>
-                                            <td className="border p-3 text-center">{kit.serialNumber}</td>
-                                            <td className="border p-3 text-center">{kit.batchNumber}</td>
-                                            <td className="border p-3 text-center">{kit.status}</td>
-                                            <td className="border p-3 text-center">{kit.orderId || "N/A"}</td>
-                                            <td className="border p-3 text-center">
-                                                {kit.invoiceUrl ? (
-                                                    <a
-                                                        href={kit.invoiceUrl}
-                                                        target="_blank"
-                                                        rel="noopener noreferrer"
-                                                        className="text-blue-600"
-                                                    >
-                                                        View
-                                                    </a>
-                                                ) : (
-                                                    "N/A"
-                                                )}
-                                            </td>
-                                            <td className="border p-3 text-center">{kit.invoiceId || "N/A"}</td>
-                                            <td className="border p-3 text-center">
-                                                {kit.status === "available" && (
-                                                    <button
-                                                        onClick={() => deleteKit(kit._id)}
-                                                        className="text-red-600 hover:text-red-800"
-                                                    >
-                                                        <Trash size={20} />
-                                                    </button>
-                                                )}
-                                            </td>
-                                        </tr>
-                                    ))}
-                                </tbody>
+    {kits.sort((a, b) => a.serialNumber.localeCompare(b.serialNumber)).map((kit, index) => (
+        <tr key={index} className="border text-gray-700">
+            <td className="border p-3 text-center">
+                {kit.status === "available" && (
+                    <input
+                        type="checkbox"
+                        checked={selectedKits.includes(kit._id)}
+                        onChange={() => toggleSelectKit(kit._id)}
+                    />
+                )}
+            </td>
+            <td className="border p-3 text-center">{kit.serialNumber}</td>
+            <td className="border p-3 text-center">{kit.batchNumber}</td>
+            <td className="border p-3 text-center">{kit.status}</td>
+            <td className="border p-3 text-center">{kit.orderId || "N/A"}</td>
+            <td className="border p-3 text-center">
+                {kit.invoiceUrl ? (
+                    <a
+                        href={kit.invoiceUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-blue-600"
+                    >
+                        View
+                    </a>
+                ) : (
+                    "N/A"
+                )}
+            </td>
+            <td className="border p-3 text-center">{kit.invoiceId || "N/A"}</td>
+            <td className="border p-3 text-center">
+                {kit.status === "available" && (
+                    <button
+                        onClick={() => deleteKit(kit._id)}
+                        className="text-red-600 hover:text-red-800"
+                    >
+                        <Trash size={20} />
+                    </button>
+                )}
+            </td>
+        </tr>
+    ))}
+</tbody>
+
                             </table>
                         </div>
                     </>
