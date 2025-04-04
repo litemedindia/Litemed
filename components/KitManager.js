@@ -224,74 +224,78 @@ const KitManager = () => {
             </div>
 
             <div className="overflow-x-auto">
-              <table className="w-full border-collapse border border-gray-300 mt-4 bg-white shadow-lg rounded-lg overflow-hidden">
-                <thead>
-                  <tr className="bg-gray-200 text-gray-800">
-                    <th className="border p-3">Select</th>
-                    <th className="border p-3">Serial Numbers</th>
-                    <th className="border p-3">Batch Numbers</th> {/* Updated header */}
-                    <th className="border p-3">Status</th>
-                    <th className="border p-3">Order ID</th>
-                    <th className="border p-3">Invoice URL</th>
-                    <th className="border p-3">Invoice ID</th>
-                    <th className="border p-3">Actions</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {kits
-                    .sort((a, b) => a.serialNumbers[0].localeCompare(b.serialNumbers[0]))
-                    .map((kit, index) => (
-                      <tr key={index} className="border text-gray-700">
-                        <td className="border p-3 text-center">
-                          {kit.status === "available" && (
-                            <input
-                              type="checkbox"
-                              checked={selectedKits.includes(kit._id)}
-                              onChange={() => toggleSelectKit(kit._id)}
-                            />
-                          )}
-                        </td>
-                        <td className="border p-3 text-center">
-                          {kit.serialNumbers.join(", ")}
-                        </td>
-                        <td className="border p-3 text-center">
-  {kit.batchNumbers 
-    ? kit.batchNumbers.join(", ") // Use batchNumbers if it exists
-    : kit.batchNumber || "N/A"    // Fallback to batchNumber or "N/A" if neither exists
-  }
-</td>
-                        <td className="border p-3 text-center">{kit.status}</td>
-                        <td className="border p-3 text-center">{kit.orderId || "N/A"}</td>
-                        <td className="border p-3 text-center">
-                          {kit.invoiceUrl ? (
-                            <a
-                              href={kit.invoiceUrl}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="text-blue-600"
-                            >
-                              View
-                            </a>
-                          ) : (
-                            "N/A"
-                          )}
-                        </td>
-                        <td className="border p-3 text-center">{kit.invoiceId || "N/A"}</td>
-                        <td className="border p-3 text-center">
-                          {kit.status === "available" && (
-                            <button
-                              onClick={() => deleteKit(kit._id)}
-                              className="text-red-600 hover:text-red-800"
-                            >
-                              <Trash size={20} />
-                            </button>
-                          )}
-                        </td>
-                      </tr>
-                    ))}
-                </tbody>
-              </table>
-            </div>
+  <table className="w-full border-collapse border border-gray-300 mt-4 bg-white shadow-lg rounded-lg overflow-hidden">
+    <thead>
+      <tr className="bg-gray-200 text-gray-800">
+        <th className="border p-3">Select</th>
+        <th className="border p-3">Serial Numbers</th>
+        <th className="border p-3">Batch Numbers</th>
+        <th className="border p-3">Status</th>
+        <th className="border p-3">Order ID</th>
+        <th className="border p-3">Invoice URL</th>
+        <th className="border p-3">Invoice ID</th>
+        <th className="border p-3">Actions</th>
+      </tr>
+    </thead>
+    <tbody>
+      {kits
+        .sort((a, b) => {
+          // Ensure serialA and serialB are strings
+          const serialA = typeof a.serialNumbers === "string" ? a.serialNumbers : String(a.serialNumbers || "");
+          const serialB = typeof b.serialNumbers === "string" ? b.serialNumbers : String(b.serialNumbers || "");
+          // Log for debugging
+          console.log("Sorting:", { a: a.serialNumbers, b: b.serialNumbers, serialA, serialB });
+          return serialA.localeCompare(serialB);
+        })
+        .map((kit, index) => (
+          <tr key={index} className="border text-gray-700">
+            <td className="border p-3 text-center">
+              {kit.status === "available" && (
+                <input
+                  type="checkbox"
+                  checked={selectedKits.includes(kit._id)}
+                  onChange={() => toggleSelectKit(kit._id)}
+                />
+              )}
+            </td>
+            <td className="border p-3 text-center">
+              {kit.serialNumbers || "N/A"}
+            </td>
+            <td className="border p-3 text-center">
+              {kit.batchNumbers || "N/A"}
+            </td>
+            <td className="border p-3 text-center">{kit.status}</td>
+            <td className="border p-3 text-center">{kit.orderId || "N/A"}</td>
+            <td className="border p-3 text-center">
+              {kit.invoiceUrl ? (
+                <a
+                  href={kit.invoiceUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-blue-600"
+                >
+                  View
+                </a>
+              ) : (
+                "N/A"
+              )}
+            </td>
+            <td className="border p-3 text-center">{kit.invoiceId || "N/A"}</td>
+            <td className="border p-3 text-center">
+              {kit.status === "available" && (
+                <button
+                  onClick={() => deleteKit(kit._id)}
+                  className="text-red-600 hover:text-red-800"
+                >
+                  <Trash size={20} />
+                </button>
+              )}
+            </td>
+          </tr>
+        ))}
+    </tbody>
+  </table>
+</div>
           </>
         ) : (
           <>
