@@ -229,7 +229,7 @@ const KitManager = () => {
                   <tr className="bg-gray-200 text-gray-800">
                     <th className="border p-3">Select</th>
                     <th className="border p-3">Serial Numbers</th>
-                    <th className="border p-3">Batch Number</th>
+                    <th className="border p-3">Batch Numbers</th> {/* Updated header */}
                     <th className="border p-3">Status</th>
                     <th className="border p-3">Order ID</th>
                     <th className="border p-3">Invoice URL</th>
@@ -254,7 +254,12 @@ const KitManager = () => {
                         <td className="border p-3 text-center">
                           {kit.serialNumbers.join(", ")}
                         </td>
-                        <td className="border p-3 text-center">{kit.batchNumber}</td>
+                        <td className="border p-3 text-center">
+  {kit.batchNumbers 
+    ? kit.batchNumbers.join(", ") // Use batchNumbers if it exists
+    : kit.batchNumber || "N/A"    // Fallback to batchNumber or "N/A" if neither exists
+  }
+</td>
                         <td className="border p-3 text-center">{kit.status}</td>
                         <td className="border p-3 text-center">{kit.orderId || "N/A"}</td>
                         <td className="border p-3 text-center">
