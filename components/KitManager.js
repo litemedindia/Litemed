@@ -15,7 +15,6 @@ const KitManager = () => {
   const [activeSection, setActiveSection] = useState("device-manager");
   const [username, setUsername] = useState("");
   const [showLogout, setShowLogout] = useState(false);
-  // New state for COD Manager
   const [codOrders, setCodOrders] = useState([]);
   const [totalCOD, setTotalCOD] = useState(0);
   const [totalConfirmed, setTotalConfirmed] = useState(0);
@@ -28,8 +27,7 @@ const KitManager = () => {
         const allKitsResponse = await axios.get(`${API_BASE_URL}/kits`);
         setKits(allKitsResponse.data);
         setTotalAvailable(
-          allKitsResponse.data.filter((kit) => kit.status === "available")
-            .length
+          allKitsResponse.data.filter((kit) => kit.status === "available").length
         );
         setTotalSold(
           allKitsResponse.data.filter((kit) => kit.status === "sold").length
@@ -63,12 +61,8 @@ const KitManager = () => {
 
   const calculateTotals = (orders) => {
     const total = orders.length;
-    const confirmed = orders.filter(
-      (order) => order.status === "Confirmed"
-    ).length;
-    const cancelled = orders.filter(
-      (order) => order.status === "Cancelled"
-    ).length;
+    const confirmed = orders.filter((order) => order.status === "Confirmed").length;
+    const cancelled = orders.filter((order) => order.status === "Cancelled").length;
     setTotalCOD(total);
     setTotalConfirmed(confirmed);
     setTotalCancelled(cancelled);
@@ -78,7 +72,6 @@ const KitManager = () => {
     try {
       await axios.put(`${API_BASE_URL}/cod/confirm/${id}`);
       const response = await axios.get(`${API_BASE_URL}/cod`);
-      console.log(response.data);
       setCodOrders(response.data);
       calculateTotals(response.data);
     } catch (error) {
@@ -195,9 +188,7 @@ const KitManager = () => {
       <div className="ml-64 flex-1 p-6 bg-gray-100 overflow-y-auto min-h-screen">
         <div className="flex justify-between items-center">
           <h1 className="text-3xl font-bold text-gray-800">
-            {activeSection === "device-manager"
-              ? "Device Manager"
-              : "COD Manager"}
+            {activeSection === "device-manager" ? "Device Manager" : "COD Manager"}
           </h1>
           {activeSection === "device-manager" && (
             <button
@@ -237,7 +228,7 @@ const KitManager = () => {
                 <thead>
                   <tr className="bg-gray-200 text-gray-800">
                     <th className="border p-3">Select</th>
-                    <th className="border p-3">Serial Number</th>
+                    <th className="border p-3">Serial Numbers</th>
                     <th className="border p-3">Batch Number</th>
                     <th className="border p-3">Status</th>
                     <th className="border p-3">Order ID</th>
@@ -248,9 +239,7 @@ const KitManager = () => {
                 </thead>
                 <tbody>
                   {kits
-                    .sort((a, b) =>
-                      a.serialNumber.localeCompare(b.serialNumber)
-                    )
+                    .sort((a, b) => a.serialNumbers[0].localeCompare(b.serialNumbers[0]))
                     .map((kit, index) => (
                       <tr key={index} className="border text-gray-700">
                         <td className="border p-3 text-center">
@@ -263,15 +252,11 @@ const KitManager = () => {
                           )}
                         </td>
                         <td className="border p-3 text-center">
-                          {kit.serialNumber}
+                          {kit.serialNumbers.join(", ")}
                         </td>
-                        <td className="border p-3 text-center">
-                          {kit.batchNumber}
-                        </td>
+                        <td className="border p-3 text-center">{kit.batchNumber}</td>
                         <td className="border p-3 text-center">{kit.status}</td>
-                        <td className="border p-3 text-center">
-                          {kit.orderId || "N/A"}
-                        </td>
+                        <td className="border p-3 text-center">{kit.orderId || "N/A"}</td>
                         <td className="border p-3 text-center">
                           {kit.invoiceUrl ? (
                             <a
@@ -286,9 +271,7 @@ const KitManager = () => {
                             "N/A"
                           )}
                         </td>
-                        <td className="border p-3 text-center">
-                          {kit.invoiceId || "N/A"}
-                        </td>
+                        <td className="border p-3 text-center">{kit.invoiceId || "N/A"}</td>
                         <td className="border p-3 text-center">
                           {kit.status === "available" && (
                             <button
@@ -307,7 +290,7 @@ const KitManager = () => {
           </>
         ) : (
           <>
-            <div className="flex justify-around mt-6 ">
+            <div className="flex justify-around mt-6">
               <div className="p-6 mr-2 bg-blue-500 text-white rounded-lg shadow-lg text-center w-1/3">
                 <h3 className="text-lg font-bold">Total COD Orders</h3>
                 <p className="text-3xl font-semibold">{totalCOD}</p>
@@ -338,21 +321,11 @@ const KitManager = () => {
                 <tbody>
                   {codOrders.map((order) => (
                     <tr key={order._id} className="border text-gray-700">
-                      <td className="border p-3 text-center">
-                        {order.orderNo}
-                      </td>
-                      <td className="border p-3 text-center">
-                        {order.customerName}
-                      </td>
-                      <td className="border p-3 text-center">
-                        {order.customerEmail}
-                      </td>
-                      <td className="border p-3 text-center">
-                        {order.customerPhone}
-                      </td>
-                      <td className="border p-3 text-center">
-                        {order.invoiceId}
-                      </td>
+                      <td className="border p-3 text-center">{order.orderNo}</td>
+                      <td className="border p-3 text-center">{order.customerName}</td>
+                      <td className="border p-3 text-center">{order.customerEmail}</td>
+                      <td className="border p-3 text-center">{order.customerPhone}</td>
+                      <td className="border p-3 text-center">{order.invoiceId}</td>
                       <td className="border p-3 text-center">{order.status}</td>
                       <td className="border p-3 text-center">
                         {order.status === "Awating Confirmation" && (
