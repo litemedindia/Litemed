@@ -5,6 +5,7 @@ import axios from "axios";
 import { User, Trash, LogOut, File } from "lucide-react";
 
 const API_BASE_URL = "https://litemed-backend.vercel.app";
+
 const KitManager = () => {
   const [kits, setKits] = useState([]);
   const [selectedKits, setSelectedKits] = useState([]);
@@ -25,6 +26,7 @@ const KitManager = () => {
     const fetchKits = async () => {
       try {
         const allKitsResponse = await axios.get(`${API_BASE_URL}/kits`);
+        console.log("Fetched kits:", allKitsResponse.data); // Debug log
         setKits(allKitsResponse.data);
         setTotalAvailable(
           allKitsResponse.data.filter((kit) => kit.status === "available").length
@@ -144,6 +146,33 @@ const KitManager = () => {
     router.push("/");
   };
 
+  // Function to split sold kits into pairs for display
+  const splitKitsForDisplay = (kits) => {
+    const displayKits = [];
+    kits.forEach((kit) => {
+      console.log("Processing kit:", kit); // Debug log
+      if (kit.status === "sold" && kit.serialNumbers.includes("&")) {
+        // Normalize delimiter: replace " & " with "&" for consistency, then split
+        const serials = kit.serialNumbers.replace(/ & /g, "&").split("&");
+        const batches = kit.batchNumbers.replace(/ & /g, "&").split("&");
+        console.log("Split serials:", serials, "Split batches:", batches); // Debug log
+        for (let i = 0; i < serials.length; i += 2) {
+          const newKit = {
+            ...kit,
+            serialNumbers: serials.slice(i, i + 2).join(" & ") || serials[i] || "N/A",
+            batchNumbers: batches[Math.floor(i / 2)] || "N/A"
+          };
+          console.log("Created new kit:", newKit); // Debug log
+          displayKits.push(newKit);
+        }
+      } else {
+        displayKits.push(kit);
+      }
+    });
+    console.log("Display kits:", displayKits); // Debug log
+    return displayKits;
+  };
+
   return (
     <div className="flex min-h-screen">
       {/* Fixed Sidebar */}
@@ -224,78 +253,75 @@ const KitManager = () => {
             </div>
 
             <div className="overflow-x-auto">
-  <table className="w-full border-collapse border border-gray-300 mt-4 bg-white shadow-lg rounded-lg overflow-hidden">
-    <thead>
-      <tr className="bg-gray-200 text-gray-800">
-        <th className="border p-3">Select</th>
-        <th className="border p-3">Serial Numbers</th>
-        <th className="border p-3">Batch Numbers</th>
-        <th className="border p-3">Status</th>
-        <th className="border p-3">Order ID</th>
-        <th className="border p-3">Invoice URL</th>
-        <th className="border p-3">Invoice ID</th>
-        <th className="border p-3">Actions</th>
-      </tr>
-    </thead>
-    <tbody>
-      {kits
-        .sort((a, b) => {
-          // Ensure serialA and serialB are strings
-          const serialA = typeof a.serialNumbers === "string" ? a.serialNumbers : String(a.serialNumbers || "");
-          const serialB = typeof b.serialNumbers === "string" ? b.serialNumbers : String(b.serialNumbers || "");
-          // Log for debugging
-          console.log("Sorting:", { a: a.serialNumbers, b: b.serialNumbers, serialA, serialB });
-          return serialA.localeCompare(serialB);
-        })
-        .map((kit, index) => (
-          <tr key={index} className="border text-gray-700">
-            <td className="border p-3 text-center">
-              {kit.status === "available" && (
-                <input
-                  type="checkbox"
-                  checked={selectedKits.includes(kit._id)}
-                  onChange={() => toggleSelectKit(kit._id)}
-                />
-              )}
-            </td>
-            <td className="border p-3 text-center">
-              {kit.serialNumbers || "N/A"}
-            </td>
-            <td className="border p-3 text-center">
-              {kit.batchNumbers || "N/A"}
-            </td>
-            <td className="border p-3 text-center">{kit.status}</td>
-            <td className="border p-3 text-center">{kit.orderId || "N/A"}</td>
-            <td className="border p-3 text-center">
-              {kit.invoiceUrl ? (
-                <a
-                  href={kit.invoiceUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-blue-600"
-                >
-                  View
-                </a>
-              ) : (
-                "N/A"
-              )}
-            </td>
-            <td className="border p-3 text-center">{kit.invoiceId || "N/A"}</td>
-            <td className="border p-3 text-center">
-              {kit.status === "available" && (
-                <button
-                  onClick={() => deleteKit(kit._id)}
-                  className="text-red-600 hover:text-red-800"
-                >
-                  <Trash size={20} />
-                </button>
-              )}
-            </td>
-          </tr>
-        ))}
-    </tbody>
-  </table>
-</div>
+              <table className="w-full border-collapse border border-gray-300 mt-4 bg-white shadow-lg rounded-lg overflow-hidden">
+                <thead>
+                  <tr className="bg-gray-200 text-gray-800">
+                    <th className="border p-3">Select</th>
+                    <th className="border p-3">Serial Numbers</th>
+                    <th className="border p-3">Batch Numbers</th>
+                    <th className="border p-3">Status</th>
+                    <th className="border p-3">Order ID</th>
+                    <th className="border p-3">Invoice URL</th>
+                    <th className="border p-3">Invoice ID</th>
+                    <th className="border p-3">Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {splitKitsForDisplay(kits)
+                    .sort((a, b) => {
+                      const serialA = typeof a.serialNumbers === "string" ? a.serialNumbers : String(a.serialNumbers || "");
+                      const serialB = typeof b.serialNumbers === "string" ? b.serialNumbers : String(b.serialNumbers || "");
+                      return serialA.localeCompare(serialB);
+                    })
+                    .map((kit, index) => (
+                      <tr key={index} className="border text-gray-700">
+                        <td className="border p-3 text-center">
+                          {kit.status === "available" && (
+                            <input
+                              type="checkbox"
+                              checked={selectedKits.includes(kit._id)}
+                              onChange={() => toggleSelectKit(kit._id)}
+                            />
+                          )}
+                        </td>
+                        <td className="border p-3 text-center">
+                          {kit.serialNumbers || "N/A"}
+                        </td>
+                        <td className="border p-3 text-center">
+                          {kit.batchNumbers || "N/A"}
+                        </td>
+                        <td className="border p-3 text-center">{kit.status}</td>
+                        <td className="border p-3 text-center">{kit.orderId || "N/A"}</td>
+                        <td className="border p-3 text-center">
+                          {kit.invoiceUrl ? (
+                            <a
+                              href={kit.invoiceUrl}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-blue-600"
+                            >
+                              View
+                            </a>
+                          ) : (
+                            "N/A"
+                          )}
+                        </td>
+                        <td className="border p-3 text-center">{kit.invoiceId || "N/A"}</td>
+                        <td className="border p-3 text-center">
+                          {kit.status === "available" && (
+                            <button
+                              onClick={() => deleteKit(kit._id)}
+                              className="text-red-600 hover:text-red-800"
+                            >
+                              <Trash size={20} />
+                            </button>
+                          )}
+                        </td>
+                      </tr>
+                    ))}
+                </tbody>
+              </table>
+            </div>
           </>
         ) : (
           <>
