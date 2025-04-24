@@ -8,7 +8,8 @@ const API_BASE_URL = "https://litemed-backend.vercel.app";
 
 const KitManager = () => {
   const [kits, setKits] = useState([]);
-  const [selectedKits, setSelectedKits] = useState([]);
+  const [selectedAvailableKits, setSelectedAvailableKits] = useState([]);
+  const [selectedSoldKits, setSelectedSoldKits] = useState([]);
   const [file, setFile] = useState(null);
   const [showUploadModal, setShowUploadModal] = useState(false);
   const [totalAvailable, setTotalAvailable] = useState(0);
@@ -105,20 +106,45 @@ const KitManager = () => {
   const deleteSelectedKits = async () => {
     try {
       await axios.post(`${API_BASE_URL}/kits/delete-multiple`, {
-        ids: selectedKits,
+        ids: selectedAvailableKits,
       });
-      setKits(kits.filter((kit) => !selectedKits.includes(kit._id)));
-      setTotalAvailable((prev) => prev - selectedKits.length);
-      setSelectedKits([]);
+      setKits(kits.filter((kit) => !selectedAvailableKits.includes(kit._id)));
+      setTotalAvailable((prev) => prev - selectedAvailableKits.length);
+      setSelectedAvailableKits([]);
     } catch (error) {
       console.error("Error deleting selected kits:", error);
     }
   };
 
-  const toggleSelectKit = (id) => {
-    setSelectedKits((prev) =>
-      prev.includes(id) ? prev.filter((kitId) => kitId !== id) : [...prev, id]
-    );
+  const makeAvailableSelectedKits = async () => {
+    try {
+      await axios.post(`${API_BASE_URL}/kits/make-available`, {
+        ids: selectedSoldKits,
+      });
+      const allKitsResponse = await axios.get(`${API_BASE_URL}/kits`);
+      setKits(allKitsResponse.data);
+      setTotalAvailable(
+        allKitsResponse.data.filter((kit) => kit.status === "available").length
+      );
+      setTotalSold(
+        allKitsResponse.data.filter((kit) => kit.status === "sold").length
+      );
+      setSelectedSoldKits([]);
+    } catch (error) {
+      console.error("Error making selected kits available:", error);
+    }
+  };
+
+  const toggleSelectKit = (id, status) => {
+    if (status === "available") {
+      setSelectedAvailableKits((prev) =>
+        prev.includes(id) ? prev.filter((kitId) => kitId !== id) : [...prev, id]
+      );
+    } else if (status === "sold") {
+      setSelectedSoldKits((prev) =>
+        prev.includes(id) ? prev.filter((kitId) => kitId !== id) : [...prev, id]
+      );
+    }
   };
 
   const uploadCSV = async () => {
@@ -196,7 +222,7 @@ const KitManager = () => {
             COD Manager
           </button>
         </div>
-        <div className="mt-auto p-4">
+        <div className="Wardha p-4">
           <div
             className="flex items-center space-x-2 cursor-pointer"
             onClick={() => setShowLogout(!showLogout)}
@@ -241,19 +267,27 @@ const KitManager = () => {
               </div>
             </div>
 
-            <div className="flex justify-end my-2">
-              {selectedKits.length > 0 && (
+            <div className="flex justify-end my-2 space-x-2">
+              {selectedAvailableKits.length > 0 && (
                 <button
                   onClick={deleteSelectedKits}
                   className="px-4 py-2 bg-red-600 text-white font-semibold rounded shadow"
                 >
-                  Delete Selected
+                  Delete Selected Available
+                </button>
+              )}
+              {selectedSoldKits.length > 0 && (
+                <button
+                  onClick={makeAvailableSelectedKits}
+                  className="px-4 py-2 bg-green-600 text-white font-semibold rounded shadow"
+                >
+                  Make Available Selected Sold
                 </button>
               )}
             </div>
 
-            <div className="overflow-x-auto">
-              <table className="w-full border-collapse border border-gray-300 mt-4 bg-white shadow-lg rounded-lg overflow-hidden">
+            <div className="overflow-auto max-h-[600px] max-w-[1200px]">
+            <table className="w-full border-collapse border border-gray-300 mt-4 bg-white shadow-lg rounded-lg">
                 <thead>
                   <tr className="bg-gray-200 text-gray-800">
                     <th className="border p-3">Select</th>
@@ -276,13 +310,15 @@ const KitManager = () => {
                     .map((kit, index) => (
                       <tr key={index} className="border text-gray-700">
                         <td className="border p-3 text-center">
-                          {kit.status === "available" && (
-                            <input
-                              type="checkbox"
-                              checked={selectedKits.includes(kit._id)}
-                              onChange={() => toggleSelectKit(kit._id)}
-                            />
-                          )}
+                          <input
+                            type="checkbox"
+                            checked={
+                              kit.status === "available"
+                                ? selectedAvailableKits.includes(kit._id)
+                                : selectedSoldKits.includes(kit._id)
+                            }
+                            onChange={() => toggleSelectKit(kit._id, kit.status)}
+                          />
                         </td>
                         <td className="border p-3 text-center">
                           {kit.serialNumbers || "N/A"}
@@ -340,8 +376,8 @@ const KitManager = () => {
               </div>
             </div>
 
-            <div className="overflow-x-auto mt-6">
-              <table className="w-full border-collapse border border-gray-300 bg-white shadow-lg rounded-lg overflow-hidden">
+            <div className="overflow-auto max-h-[600px] max-w-[1200px] mt-6">
+            <table className="w-full border-collapse border border-gray-300 mt-4 bg-white shadow-lg rounded-lg">
                 <thead>
                   <tr className="bg-gray-200 text-gray-800">
                     <th className="border p-3">Order No</th>
