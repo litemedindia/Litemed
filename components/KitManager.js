@@ -4,7 +4,7 @@ import { useRouter } from "next/navigation";
 import axios from "axios";
 import { User, Trash, LogOut, File } from "lucide-react";
 
-const API_BASE_URL = "http://localhost:3001";
+const API_BASE_URL = "https://litemed-backend.vercel.app";
 
 const KitManager = () => {
   const [kits, setKits] = useState([]);
