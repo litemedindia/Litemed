@@ -1,10 +1,10 @@
-"use client";
+'use client';
 import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import axios from "axios";
 import { User, Trash, LogOut, File } from "lucide-react";
 
-const API_BASE_URL = "https://litemed-backend.vercel.app";
+const API_BASE_URL = "http://localhost:3001";
 
 const KitManager = () => {
   const [kits, setKits] = useState([]);
@@ -16,18 +16,21 @@ const KitManager = () => {
   const [totalSold, setTotalSold] = useState(0);
   const [activeSection, setActiveSection] = useState("device-manager");
   const [username, setUsername] = useState("");
-  const [showLogout, setShowLogout] = useState(false);
   const [codOrders, setCodOrders] = useState([]);
   const [totalCOD, setTotalCOD] = useState(0);
   const [totalConfirmed, setTotalConfirmed] = useState(0);
   const [totalCancelled, setTotalCancelled] = useState(0);
+  const [returnTickets, setReturnTickets] = useState([]);
+  const [totalReturns, setTotalReturns] = useState(0);
+  const [totalAwaitingReturn, setTotalAwaitingReturn] = useState(0);
+  const [totalReturnReceived, setTotalReturnReceived] = useState(0);
+  const [totalRefundInitiated, setTotalRefundInitiated] = useState(0);
   const router = useRouter();
 
   useEffect(() => {
     const fetchKits = async () => {
       try {
         const allKitsResponse = await axios.get(`${API_BASE_URL}/kits`);
-        console.log("Fetched kits:", allKitsResponse.data); // Debug log
         setKits(allKitsResponse.data);
         setTotalAvailable(
           allKitsResponse.data.filter((kit) => kit.status === "available").length
@@ -44,9 +47,19 @@ const KitManager = () => {
       try {
         const response = await axios.get(`${API_BASE_URL}/cod`);
         setCodOrders(response.data);
-        calculateTotals(response.data);
+        calculateCodTotals(response.data);
       } catch (error) {
         console.error("Error fetching COD orders:", error);
+      }
+    };
+
+    const fetchReturnTickets = async () => {
+      try {
+        const response = await axios.get(`${API_BASE_URL}/returnservice`);
+        setReturnTickets(response.data);
+        calculateReturnTotals(response.data);
+      } catch (error) {
+        console.error("Error fetching return tickets:", error);
       }
     };
 
@@ -54,6 +67,8 @@ const KitManager = () => {
       fetchKits();
     } else if (activeSection === "cod") {
       fetchCodOrders();
+    } else if (activeSection === "return-manager") {
+      fetchReturnTickets();
     }
 
     const storedUsername = localStorage.getItem("username");
@@ -62,7 +77,7 @@ const KitManager = () => {
     }
   }, [activeSection]);
 
-  const calculateTotals = (orders) => {
+  const calculateCodTotals = (orders) => {
     const total = orders.length;
     const confirmed = orders.filter((order) => order.status === "Confirmed").length;
     const cancelled = orders.filter((order) => order.status === "Cancelled").length;
@@ -71,12 +86,23 @@ const KitManager = () => {
     setTotalCancelled(cancelled);
   };
 
+  const calculateReturnTotals = (tickets) => {
+    const total = tickets.length;
+    const awaiting = tickets.filter((ticket) => ticket.status === "Awaiting Return").length;
+    const received = tickets.filter((ticket) => ticket.status === "Return Received").length;
+    const refunded = tickets.filter((ticket) => ticket.status === "Refund Initiated").length;
+    setTotalReturns(total);
+    setTotalAwaitingReturn(awaiting);
+    setTotalReturnReceived(received);
+    setTotalRefundInitiated(refunded);
+  };
+
   const confirmOrder = async (id) => {
     try {
       await axios.put(`${API_BASE_URL}/cod/confirm/${id}`);
       const response = await axios.get(`${API_BASE_URL}/cod`);
       setCodOrders(response.data);
-      calculateTotals(response.data);
+      calculateCodTotals(response.data);
     } catch (error) {
       console.error("Error confirming order:", error);
     }
@@ -87,9 +113,21 @@ const KitManager = () => {
       await axios.put(`${API_BASE_URL}/cod/cancel/${id}`);
       const response = await axios.get(`${API_BASE_URL}/cod`);
       setCodOrders(response.data);
-      calculateTotals(response.data);
+      calculateCodTotals(response.data);
     } catch (error) {
       console.error("Error canceling order:", error);
+    }
+  };
+
+  const updateReturnStatus = async (id, action) => {
+    try {
+      await axios.put(`${API_BASE_URL}/returnservice/${id}/action`, { action });
+      const response = await axios.get(`${API_BASE_URL}/returnservice`);
+      setReturnTickets(response.data);
+      calculateReturnTotals(response.data);
+    } catch (error) {
+      console.error("Error updating return status:", error);
+      alert("Failed to update status");
     }
   };
 
@@ -172,36 +210,29 @@ const KitManager = () => {
     router.push("/");
   };
 
-  // Function to split sold kits into pairs for display
   const splitKitsForDisplay = (kits) => {
     const displayKits = [];
     kits.forEach((kit) => {
-      console.log("Processing kit:", kit); // Debug log
       if (kit.status === "sold" && kit.serialNumbers.includes("&")) {
-        // Normalize delimiter: replace " & " with "&" for consistency, then split
         const serials = kit.serialNumbers.replace(/ & /g, "&").split("&");
         const batches = kit.batchNumbers.replace(/ & /g, "&").split("&");
-        console.log("Split serials:", serials, "Split batches:", batches); // Debug log
         for (let i = 0; i < serials.length; i += 2) {
           const newKit = {
             ...kit,
             serialNumbers: serials.slice(i, i + 2).join(" & ") || serials[i] || "N/A",
             batchNumbers: batches[Math.floor(i / 2)] || "N/A"
           };
-          console.log("Created new kit:", newKit); // Debug log
           displayKits.push(newKit);
         }
       } else {
         displayKits.push(kit);
       }
     });
-    console.log("Display kits:", displayKits); // Debug log
     return displayKits;
   };
 
   return (
     <div className="flex min-h-screen">
-      {/* Fixed Sidebar */}
       <div className="fixed top-0 left-0 w-64 h-screen bg-gray-800 text-white flex flex-col">
         <div className="p-4 text-xl font-bold">Curapod</div>
         <div className="flex flex-col space-y-2 p-4">
@@ -221,11 +252,19 @@ const KitManager = () => {
           >
             COD Manager
           </button>
+          <button
+            className={`text-left p-2 rounded ${
+              activeSection === "return-manager" ? "bg-gray-700" : ""
+            } hover:bg-gray-700`}
+            onClick={() => setActiveSection("return-manager")}
+          >
+            Return Manager
+          </button>
         </div>
-        <div className="Wardha p-4">
+        <div className="mt-auto p-4">
           <div
             className="flex items-center space-x-2 cursor-pointer"
-            onClick={() => setShowLogout(!showLogout)}
+            onClick={() => setShowLogout(!setShowLogout)}
           >
             <User size={24} />
             <span>{username || "Profile"}</span>
@@ -243,7 +282,8 @@ const KitManager = () => {
       <div className="ml-64 flex-1 p-6 bg-gray-100 overflow-y-auto min-h-screen">
         <div className="flex justify-between items-center">
           <h1 className="text-3xl font-bold text-gray-800">
-            {activeSection === "device-manager" ? "Device Manager" : "COD Manager"}
+            {activeSection === "device-manager" ? "Device Manager" : 
+             activeSection === "cod" ? "COD Manager" : "Return Manager"}
           </h1>
           {activeSection === "device-manager" && (
             <button
@@ -254,6 +294,7 @@ const KitManager = () => {
             </button>
           )}
         </div>
+
         {activeSection === "device-manager" ? (
           <>
             <div className="flex justify-around mt-6">
@@ -287,7 +328,7 @@ const KitManager = () => {
             </div>
 
             <div className="overflow-auto max-h-[600px] max-w-[1200px]">
-            <table className="w-full border-collapse border border-gray-300 mt-4 bg-white shadow-lg rounded-lg">
+              <table className="w-full border-collapse border border-gray-300 mt-4 bg-white shadow-lg rounded-lg">
                 <thead>
                   <tr className="bg-gray-200 text-gray-800">
                     <th className="border p-3">Select</th>
@@ -359,7 +400,7 @@ const KitManager = () => {
               </table>
             </div>
           </>
-        ) : (
+        ) : activeSection === "cod" ? (
           <>
             <div className="flex justify-around mt-6">
               <div className="p-6 mr-2 bg-blue-500 text-white rounded-lg shadow-lg text-center w-1/3">
@@ -377,7 +418,7 @@ const KitManager = () => {
             </div>
 
             <div className="overflow-auto max-h-[600px] max-w-[1200px] mt-6">
-            <table className="w-full border-collapse border border-gray-300 mt-4 bg-white shadow-lg rounded-lg">
+              <table className="w-full border-collapse border border-gray-300 mt-4 bg-white shadow-lg rounded-lg">
                 <thead>
                   <tr className="bg-gray-200 text-gray-800">
                     <th className="border p-3">Order No</th>
@@ -414,6 +455,73 @@ const KitManager = () => {
                               ✗
                             </button>
                           </>
+                        )}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </>
+        ) : (
+          <>
+            <div className="flex justify-around mt-6">
+              <div className="p-6 mr-2 bg-blue-500 text-white rounded-lg shadow-lg text-center w-1/4">
+                <h3 className="text-lg font-bold">Total Returns</h3>
+                <p className="text-3xl font-semibold">{totalReturns}</p>
+              </div>
+              <div className="p-6 bg-yellow-500 text-white rounded-lg shadow-lg text-center w-1/4">
+                <h3 className="text-lg font-bold">Awaiting Return</h3>
+                <p className="text-3xl font-semibold">{totalAwaitingReturn}</p>
+              </div>
+              <div className="p-6 ml-2 bg-green-500 text-white rounded-lg shadow-lg text-center w-1/4">
+                <h3 className="text-lg font-bold">Return Received</h3>
+                <p className="text-3xl font-semibold">{totalReturnReceived}</p>
+              </div>
+              <div className="p-6 ml-2 bg-purple-500 text-white rounded-lg shadow-lg text-center w-1/4">
+                <h3 className="text-lg font-bold">Refund Initiated</h3>
+                <p className="text-3xl font-semibold">{totalRefundInitiated}</p>
+              </div>
+            </div>
+
+            <div className="overflow-auto max-h-[600px] max-w-[1200px] mt-6">
+              <table className="w-full border-collapse border border-gray-300 mt-4 bg-white shadow-lg rounded-lg">
+                <thead>
+                  <tr className="bg-gray-200 text-gray-800">
+                    <th className="border p-3">Order ID</th>
+                    <th className="border p-3">Customer Name</th>
+
+                    <th className="border p-3">Customer Phone</th>
+                    <th className="border p-3">Ticket Type</th>
+                    <th className="border p-3">Status</th>
+                    <th className="border p-3">Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {returnTickets.map((ticket) => (
+                    <tr key={ticket._id} className="border text-gray-700">
+                      <td className="border p-3 text-center">{ticket.orderId}</td>
+                      <td className="border p-3 text-center">{ticket.customerName}</td>
+
+                      <td className="border p-3 text-center">{ticket.customerPhone}</td>
+                      <td className="border p-3 text-center">{ticket.ticketType}</td>
+                      <td className="border p-3 text-center">{ticket.status}</td>
+                      <td className="border p-3 text-center">
+                        {ticket.status === "Awaiting Return" && (
+                          <button
+                            className="px-2 py-1 bg-green-500 text-white rounded mr-2"
+                            onClick={() => updateReturnStatus(ticket._id, "return_received")}
+                          >
+                            Return Received
+                          </button>
+                        )}
+                        {ticket.status === "Return Received" && ticket.ticketType === "Refund" && (
+                          <button
+                            className="px-2 py-1 bg-purple-500 text-white rounded"
+                            onClick={() => updateReturnStatus(ticket._id, "refund_initiated")}
+                          >
+                            Refund Initiated
+                          </button>
                         )}
                       </td>
                     </tr>
